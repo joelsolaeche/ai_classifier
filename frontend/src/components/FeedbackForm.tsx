@@ -32,7 +32,7 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({
       await apiService.sendFeedback({
         feedback: feedback.trim(),
         score,
-        predicted_class: prediction,
+        prediction,
         image_file_name: imageFileName,
       });
       setSubmitted(true);
