@@ -53,7 +53,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# lib/ - Commented out to allow frontend/src/lib
 lib64/
 parts/
 sdist/
