@@ -15,20 +15,13 @@ origins = [
     "https://ai-classifier-web-238zoj6ea-slashys-projects.vercel.app",  # Vercel preview domains
 ]
 
-# Add CORS middleware - Railway compatible configuration
+# Simple CORS - allow all origins temporarily for debugging  
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000", 
-        "https://ai-classifier-web-app.vercel.app",
-        "https://ai-classifier-web-238zoj6ea-slashys-projects.vercel.app",
-        "https://aiclassifier-pnzsvfxj3-slashys-projects.vercel.app",
-    ],
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Accept", "Accept-Language", "Content-Language", "Content-Type", "Authorization"],
-    expose_headers=["*"],
+    allow_origins=["*"],
+    allow_credentials=False, 
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Root endpoint for health check and CORS testing
