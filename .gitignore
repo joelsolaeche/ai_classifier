@@ -1,0 +1,319 @@
+# AI Vision Classifier - Git Ignore File
+
+# =============================================================================
+# ENVIRONMENT & CONFIG FILES
+# =============================================================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# =============================================================================
+# NODE.JS & FRONTEND
+# =============================================================================
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/dist/
+frontend/.cache/
+frontend/.vscode/
+frontend/.idea/
+
+# Frontend build artifacts
+frontend/package-lock.json.bak
+frontend/yarn-error.log
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.pnpm-debug.log*
+
+# Next.js
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/dist/
+
+# =============================================================================
+# PYTHON & BACKEND
+# =============================================================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# =============================================================================
+# DOCKER & CONTAINERS
+# =============================================================================
+# Docker volumes
+db_data/
+redis_data/
+uploads/
+
+# Docker build context
+.dockerignore.bak
+
+# =============================================================================
+# DATABASE FILES
+# =============================================================================
+*.db
+*.sqlite
+*.sqlite3
+
+# PostgreSQL
+*.dump
+*.sql.bak
+
+# =============================================================================
+# MACHINE LEARNING & MODEL FILES
+# =============================================================================
+# Large model files (should be downloaded separately)
+*.h5
+*.pb
+*.ckpt
+*.pth
+*.pkl
+*.joblib
+model_weights/
+saved_models/
+checkpoints/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# TensorBoard logs
+logs/
+runs/
+
+# =============================================================================
+# MEDIA & UPLOAD FILES
+# =============================================================================
+# Uploaded images (too large for Git)
+uploads/
+media/
+static/media/
+user_uploads/
+temp_uploads/
+
+# Image processing cache
+image_cache/
+thumbnails/
+processed/
+
+# =============================================================================
+# IDE & EDITOR FILES
+# =============================================================================
+# VSCode
+.vscode/
+.history/
+
+# PyCharm
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Sublime Text
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+*.sublime-workspace
+*.sublime-project
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# =============================================================================
+# OPERATING SYSTEM FILES
+# =============================================================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.tmp
+*.temp
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# =============================================================================
+# LOGS & DEBUGGING
+# =============================================================================
+*.log
+logs/
+*.log.*
+pip-log.txt
+pip-delete-this-directory.txt
+
+# =============================================================================
+# TEMPORARY & CACHE FILES
+# =============================================================================
+*.tmp
+*.temp
+*.cache
+.cache/
+tmp/
+temp/
+
+# =============================================================================
+# BACKUP FILES
+# =============================================================================
+*.bak
+*.backup
+*.old
+*~
+
+# =============================================================================
+# SECURITY & SECRETS
+# =============================================================================
+# JWT secrets
+*.pem
+*.key
+*.crt
+*.cert
+secrets/
+.secrets/
+
+# API keys
+api_keys.txt
+credentials.json
+
+# =============================================================================
+# PERFORMANCE & PROFILING
+# =============================================================================
+.prof
+*.prof
+profile_results/
+
+# =============================================================================
+# DOCUMENTATION BUILD
+# =============================================================================
+docs/_build/
+docs/build/
+site/
+
+# =============================================================================
+# CUSTOM PROJECT EXCLUSIONS
+# =============================================================================
+# Large dataset files
+datasets/
+data/raw/
+data/processed/
+training_data/
+
+# Model artifacts
+model_artifacts/
+experiment_results/
+model_checkpoints/
+
+# Performance test results
+performance_tests/
+load_test_results/
+
+# =============================================================================
+# END OF FILE
+# =============================================================================

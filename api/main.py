@@ -7,18 +7,14 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Image Prediction API", version="0.0.1")
 
-# Add CORS middleware to allow requests from Next.js frontend
+# Add CORS middleware to allow requests from the Next.js frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Allow all origins for development
-    allow_credentials=False,  # Must be False when allow_origins=["*"]
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
 )
-
-@app.get("/")
-def read_root():
-    return {"message": "Image Prediction API is running", "cors": "enabled"}
 
 app.include_router(auth_router.router)
 app.include_router(model_router.router)

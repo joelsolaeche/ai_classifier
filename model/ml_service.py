@@ -9,16 +9,10 @@ from tensorflow.keras.applications import ResNet50
 from tensorflow.keras.applications.resnet50 import decode_predictions, preprocess_input
 from tensorflow.keras.preprocessing import image
 
-# TODO
-# Connect to Redis and assign to variable `db``
+# Connect to Redis and assign to variable `db`
 # Make use of settings.py module to get Redis settings like host, port, etc.
-db = redis.Redis(
-    host=settings.REDIS_IP,
-    port=settings.REDIS_PORT,
-    db=settings.REDIS_DB_ID
-)
+db = redis.Redis(host=settings.REDIS_IP, port=settings.REDIS_PORT, db=settings.REDIS_DB_ID)
 
-# TODO
 # Load your ML model and assign to variable `model`
 # See https://drive.google.com/file/d/1ADuBSE4z2ZVIdn66YDSwxKv-58U7WEOn/view?usp=sharing
 # for more information about how to use this model.
@@ -41,27 +35,23 @@ def predict(image_name):
         Model predicted class as a string and the corresponding confidence
         score as a number.
     """
-    class_name = None
-    pred_probability = None
-    # TODO: Implement the code to predict the class of the image_name
-
     # Load image
-    image_path = os.path.join(settings.UPLOAD_FOLDER, image_name)
-    img = image.load_img(image_path, target_size=(224, 224))
-
+    img_path = os.path.join(settings.UPLOAD_FOLDER, image_name)
+    img = image.load_img(img_path, target_size=(224, 224))
+    
     # Apply preprocessing (convert to numpy array, match model input dimensions (including batch) and use the resnet50 preprocessing)
     img_array = image.img_to_array(img)
-    img_array = np.expand_dims(img_array, axis=0)
-    img_array = preprocess_input(img_array)
-
+    img_batch = np.expand_dims(img_array, axis=0)
+    img_preprocessed = preprocess_input(img_batch)
+    
     # Get predictions using model methods and decode predictions using resnet50 decode_predictions
-    predictions = model.predict(img_array)
+    predictions = model.predict(img_preprocessed)
     decoded_predictions = decode_predictions(predictions, top=1)[0]
+    
     _, class_name, pred_probability = decoded_predictions[0]
-
+    
     # Convert probabilities to float and round it
-    pred_probability = float(pred_probability)
-    pred_probability = round(pred_probability, 4)
+    pred_probability = round(float(pred_probability), 4)
 
     return class_name, pred_probability
 
@@ -91,18 +81,17 @@ def classify_process():
         #      sent
         # Hint: You should be able to successfully implement the communication
         #       code with Redis making use of functions `brpop()` and `set()`.
-        # TODO
+        
         # Take a new job from Redis
         job = db.brpop(settings.REDIS_QUEUE)
         
-        if job is not None:
+        if job:
             # Decode the JSON data for the given job
-            _, job_data = job
-            job_info = json.loads(job_data.decode('utf-8'))
+            job_data = json.loads(job[1])
             
             # Important! Get and keep the original job ID
-            job_id = job_info['id']
-            image_name = job_info['image_name']
+            job_id = job_data["id"]
+            image_name = job_data["image_name"]
             
             # Run the loaded ml model (use the predict() function)
             class_name, pred_probability = predict(image_name)

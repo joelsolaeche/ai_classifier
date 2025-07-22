@@ -17,21 +17,39 @@ def login(username: str, password: str) -> Optional[str]:
     Returns:
         Optional[str]: token if login is successful, None otherwise
     """
-    # TODO: Implement the login function
-    # Steps to Build the `login` Function:
-    #  1. Construct the API endpoint URL using `API_BASE_URL` and `/login`.
-    #  2. Set up the request headers with `accept: application/json` and
-    #     `Content-Type: application/x-www-form-urlencoded`.
-    #  3. Prepare the data payload with fields: `grant_type`, `username`, `password`,
-    #     `scope`, `client_id`, and `client_secret`.
-    #  4. Use `requests.post()` to send the API request with the URL, headers,
-    #     and data payload.
-    #  5. Check if the response status code is `200`.
-    #  6. If successful, extract the token from the JSON response.
-    #  7. Return the token if login is successful, otherwise return `None`.
-    #  8. Test the function with various inputs.
-
-    return None
+    # 1. Construct the API endpoint URL using `API_BASE_URL` and `/login`
+    url = f"{API_BASE_URL}/login"
+    
+    # 2. Set up the request headers
+    headers = {
+        "accept": "application/json",
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+    
+    # 3. Prepare the data payload
+    data = {
+        "grant_type": "",
+        "username": username,
+        "password": password,
+        "scope": "",
+        "client_id": "",
+        "client_secret": ""
+    }
+    
+    try:
+        # 4. Use requests.post() to send the API request
+        response = requests.post(url, headers=headers, data=data)
+        
+        # 5. Check if the response status code is 200
+        if response.status_code == 200:
+            # 6. Extract the token from the JSON response
+            token_data = response.json()
+            return token_data.get("access_token")
+        else:
+            return None
+    except Exception as e:
+        print(f"Login error: {e}")
+        return None
 
 
 def predict(token: str, uploaded_file: Image) -> requests.Response:
@@ -45,15 +63,26 @@ def predict(token: str, uploaded_file: Image) -> requests.Response:
     Returns:
         requests.Response: response from the API
     """
-    # TODO: Implement the predict function
-    # Steps to Build the `predict` Function:
-    #  1. Create a dictionary with the file data. The file should be a
-    #     tuple with the file name and the file content.
-    #  2. Add the token to the headers.
-    #  3. Make a POST request to the predict endpoint.
-    #  4. Return the response.
-    response = None
-
+    # 1. Create a dictionary with the file data
+    url = f"{API_BASE_URL}/model/predict"
+    
+    # 2. Add the token to the headers
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+    
+    # Reset file pointer to beginning
+    uploaded_file.seek(0)
+    
+    # Create file tuple for multipart upload
+    files = {
+        "file": (uploaded_file.name, uploaded_file, uploaded_file.type)
+    }
+    
+    # 3. Make a POST request to the predict endpoint
+    response = requests.post(url, headers=headers, files=files)
+    
+    # 4. Return the response
     return response
 
 
@@ -73,15 +102,27 @@ def send_feedback(
     Returns:
         requests.Response: _description_
     """
-    # TODO: Implement the send_feedback function
-    # Steps to Build the `send_feedback` Function:
-    # 1. Create a dictionary with the feedback data including feedback, score,
-    #    predicted_class, and image_file_name.
-    # 2. Add the token to the headers.
-    # 3. Make a POST request to the feedback endpoint.
-    # 4. Return the response.
-    response = None
-
+    # 1. Create a dictionary with the feedback data
+    url = f"{API_BASE_URL}/feedback/"
+    
+    # 2. Add the token to the headers
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+    
+    # Prepare feedback data
+    feedback_data = {
+        "feedback": feedback,
+        "score": score,
+        "predicted_class": prediction,
+        "image_file_name": image_file_name
+    }
+    
+    # 3. Make a POST request to the feedback endpoint
+    response = requests.post(url, headers=headers, json=feedback_data)
+    
+    # 4. Return the response
     return response
 
 
