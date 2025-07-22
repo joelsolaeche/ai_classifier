@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { apiService } from '@/lib/api';
+import { apiService } from '../lib/api';
 
 interface User {
   email: string;

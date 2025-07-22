@@ -2,8 +2,8 @@
 
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Card, CardContent } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { Card, CardContent } from './ui/Card';
+import { Button } from './ui/Button';
 import { Upload, X, Image as ImageIcon, FileImage, CheckCircle } from 'lucide-react';
 import Image from 'next/image';
 

@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
+import { Button } from './ui/Button';
 import { MessageSquare, Send, CheckCircle, Heart, Star } from 'lucide-react';
-import { apiService } from '@/lib/api';
+import { apiService } from '../lib/api';
 
 interface FeedbackFormProps {
   prediction: string;

@@ -1,15 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { LoginForm } from '@/components/LoginForm';
-import { ImageUpload } from '@/components/ImageUpload';
-import { PredictionResults } from '@/components/PredictionResults';
-import { FeedbackForm } from '@/components/FeedbackForm';
-import { Button } from '@/components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { useAuth } from '../contexts/AuthContext';
+import { LoginForm } from '../components/LoginForm';
+import { ImageUpload } from '../components/ImageUpload';
+import { PredictionResults } from '../components/PredictionResults';
+import { FeedbackForm } from '../components/FeedbackForm';
+import { Button } from '../components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { LogOut, Brain, Sparkles, Zap, Star, Upload } from 'lucide-react';
-import { apiService } from '@/lib/api';
+import { apiService } from '../lib/api';
 
 interface PredictionResult {
   success: boolean;
