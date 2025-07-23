@@ -21,7 +21,7 @@ export const LoginForm: React.FC = () => {
 
     try {
       await login(username, password);
-    } catch (err) {
+    } catch {
       setError('Invalid credentials. Please try again.');
     } finally {
       setLoading(false);

@@ -19,6 +19,7 @@ services:
       POSTGRES_PASSWORD: $POSTGRES_PASSWORD
       DATABASE_HOST: $DATABASE_HOST
       SECRET_KEY: $SECRET_KEY
+      PORT: 5000
     networks:
       - shared_network
 
