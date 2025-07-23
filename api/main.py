@@ -13,14 +13,16 @@ origins = [
     "http://127.0.0.1:3000",  # Local development alternative
     "https://ai-classifier-web-app.vercel.app",  # Main Vercel domain
     "https://ai-classifier-web-238zoj6ea-slashys-projects.vercel.app",  # Vercel preview domains
+    "https://*.up.railway.app",  # Railway domains
+    # Add your specific Railway URL when you get it
 ]
 
-# Simple CORS - allow all origins temporarily for debugging  
+# Production CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False, 
-    allow_methods=["*"],
+    allow_origins=origins,
+    allow_credentials=True, 
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 
