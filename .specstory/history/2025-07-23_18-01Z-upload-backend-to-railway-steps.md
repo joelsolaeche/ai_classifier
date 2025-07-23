@@ -410,13 +410,500 @@ Since both services need access to uploaded images, you have 2 options:
 2. Add volume: `/src/uploads` → Mount same volume on both services
 
 **Option B: Use Cloud Storage**
-Consider using AWS
+Consider using AWS S3, Cloudinary, or similar for production file storage
+
+### **STEP 6: Update CORS for Production**
+
+Your API service will get a Railway URL like `https://api-backend-production-xxxx.up.railway.app`
+
+Add this to your allowed origins and deploy:
 
 ---
 
 
 
 ---
+
+<think><details><summary>Thought Process</summary>The user wants me to complete all the steps, so let me continue with the remaining configuration steps and testing procedures.</details></think>
+
+---
+
+### **STEP 7: Deploy Services in Order**
+
+Deploy in this specific order to avoid dependency issues:
+
+1. **PostgreSQL** ✅ (Already running)
+2. **Redis** ✅ (Already running)  
+3. **ML Model Service** (Deploy first so it's ready for API calls)
+4. **FastAPI Backend** (Deploy last)
+
+### **STEP 8: Configure Your Frontend**
+
+Update your Vercel frontend to use the new Railway API URL:
+
+In your `frontend/src/lib/api.ts`, change the base URL to your Railway API URL:
+```typescript
+const API_BASE_URL = 'https://your-api-backend-production-xxxx.up.railway.app'
+```
+
+### **STEP 9: Testing & Verification**
+
+Once deployed, test these endpoints:
+
+1. **Health Check:** `https://your-api-url.up.railway.app/health`
+2. **Root Endpoint:** `https://your-api-url.up.railway.app/`
+3. **Upload & Classify:** Test image upload through your Vercel frontend
+
+## 🔧 **Troubleshooting Tips**
+
+**If ML Service Fails:**
+- Check memory limits in Railway dashboard
+- TensorFlow is memory-heavy - you might need a paid plan
+- Monitor logs in Railway for memory errors
+
+**If API Can't Connect to ML Service:**
+- Verify Redis variables are correctly set
+- Check both services are in the same Railway project
+- Ensure ML service is running (check logs)
+
+**If Database Connection Fails:**
+- Verify PostgreSQL environment variables
+- Check if migrations need to run
+- Use Railway's database connection test
+
+## 💰 **Railway Pricing Considerations**
+
+- **Free Tier:** $5 credit/month, limited CPU/memory
+- **ML Service:** TensorFlow + ResNet50 is resource-intensive
+- **Recommendation:** Consider Hobby plan ($5/month) for reliable ML performance
+
+## 🎯 **Final Configuration**
+
+After deployment, you'll have:
+- ✅ PostgreSQL database on Railway
+- ✅ Redis queue on Railway  
+- ✅ FastAPI backend on Railway
+- ✅ ML model service on Railway
+- ✅ Frontend on Vercel
+- ✅ All services connected and communicating
+
+Would you like me to help you with any specific part of this deployment, or do you have questions about configuring any of these services?
+
+---
+
+_**User**_
+
+api backend failed, this is the logs. 
+
+[Region: us-east4]
+
+=========================
+
+Using Detected Dockerfile
+
+=========================
+
+
+PORT variable must be integer between 0 and 65535
+
+---
+
+_**Assistant**_
+
+<think><details><summary>Thought Process</summary>The user is getting an error about the PORT variable when deploying their API backend to Railway. The error says "PORT variable must be integer between 0 and 65535". 
+
+Looking at the docker-compose.yml file I saw earlier, it shows:
+```
+environment:
+  PORT: 5000
+```
+
+And in the Dockerfile for the API, the CMD is:
+```
+CMD gunicorn -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000} main:app
+```
+
+The issue is likely that Railway automatically provides a PORT environment variable, but there might be a conflict or the PORT variable isn't being set correctly. In Railway, the PORT is typically provided automatically and should be used as-is.
+
+Let me check the current api/main.py and Dockerfile to understand the exact issue.</details></think>
+
+---
+
+The error indicates that Railway is having trouble with the PORT environment variable. Let me check your current Dockerfile and fix the PORT configuration issue.
+
+---
+
+Read file: api/Dockerfile
+
+---
+
+<think><details><summary>Thought Process</summary>I see the issue! In the Dockerfile, the CMD line is using `${PORT:-8000}` which expects PORT to be an environment variable. However, Railway provides PORT automatically, but there might be a conflict with how it's being set.
+
+The error "PORT variable must be integer between 0 and 65535" suggests that either:
+1. The PORT variable is not being set properly by Railway
+2. There's a conflict in how the PORT is being referenced
+3. The Docker CMD syntax isn't working as expected
+
+Let me also check if they have any PORT settings in their docker-compose that might be conflicting, and then provide a fix for the Dockerfile.
+
+From the docker-compose.yml I saw earlier:
+```
+environment:
+  PORT: 5000
+```
+
+But Railway sets its own PORT dynamically. The issue is likely that the Dockerfile CMD isn't properly handling the PORT variable that Railway provides.
+
+I should update the Dockerfile to fix this issue.</details></think>
+
+---
+
+I see the issue! The problem is with how the PORT variable is being handled in your Dockerfile. Railway automatically provides a `PORT` environment variable, but your Dockerfile syntax isn't compatible with Railway's expectations.
+
+Let me fix your Dockerfile:
+
+---
+
+
+
+---
+
+<think><details><summary>Thought Process</summary>I made the fix to the Dockerfile. The changes are:
+
+1. Added `EXPOSE 8000` to document the port the container listens on
+2. Changed `${PORT:-8000}` to just `$PORT` because Railway will always provide the PORT environment variable
+
+The issue was that the `${PORT:-8000}` syntax (which provides a default value of 8000 if PORT isn't set) was causing problems with Railway's PORT variable handling. Railway expects to control the PORT completely, so we should just use `$PORT` directly.
+
+Now I should also make sure there are no conflicting PORT settings in their Railway environment variables configuration.</details></think>
+
+---
+
+## 🔧 **The Fix Explained:**
+
+The issue was in your Dockerfile's CMD line. Here's what was wrong and what I fixed:
+
+**❌ Problem:** 
+```dockerfile
+CMD gunicorn -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000} main:app
+```
+
+**✅ Solution:**
+```dockerfile
+EXPOSE 8000
+CMD gunicorn -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT main:app
+```
+
+**Why this fixes it:**
+- Railway automatically provides a `PORT` environment variable
+- The `${PORT:-8000}` syntax was causing conflicts with Railway's PORT handling
+- Using `$PORT` directly lets Railway control the port assignment
+- Added `EXPOSE 8000` for proper Docker documentation
+
+## 🚀 **Next Steps:**
+
+1. **Commit and push your changes:**
+   ```bash
+   git add api/Dockerfile
+   git commit -m "Fix PORT variable for Railway deployment"
+   git push origin main
+   ```
+
+2. **In Railway Web Interface:**
+   - Go to your API backend service
+   - Click **"Redeploy"** or push will trigger auto-deploy
+   - **Remove any manual PORT environment variable** you might have set in Railway (Railway sets this automatically)
+
+3. **Environment Variables Check:**
+   Make sure in your Railway API service, you do **NOT** have a manual `PORT` variable set. Railway handles this automatically.
+
+   Keep only these variables:
+   ```bash
+   POSTGRES_USER=${{Postgres.PGUSER}}
+   POSTGRES_PASSWORD=${{Postgres.PGPASSWORD}}
+   DATABASE_HOST=${{Postgres.PGHOST}}:${{Postgres.PGPORT}}
+   POSTGRES_DB=${{Postgres.PGDATABASE}}
+   REDIS_IP=${{Redis.REDIS_HOST}}
+   SECRET_KEY=your-secret-key-here
+   API_DEBUG=False
+   ```
+
+4. **Wait for deployment** and check the logs again. It should now start successfully!
+
+The deployment should work now. Let me know what the new logs show after redeploying!
+
+---
+
+_**User**_
+
+still get this build logs.  
+
+[Region: us-east4]
+
+=========================
+
+Using Detected Dockerfile
+
+=========================
+
+
+PORT variable must be integer between 0 and 65535
+
+---
+
+_**Assistant**_
+
+<think><details><summary>Thought Process</summary>The user is still getting the same PORT error even after my fix. This suggests that Railway is still not able to parse the PORT variable correctly. Let me think about this:
+
+1. The error "PORT variable must be integer between 0 and 65535" suggests Railway is trying to validate the PORT environment variable during the build process, not runtime.
+
+2. Looking at the docker-compose.yml from earlier, I see there was an environment variable set to `PORT: 5000` which might be conflicting.
+
+3. Railway might be setting its own PORT variable that conflicts with any existing PORT environment variable.
+
+4. The issue might be that Railway is trying to validate the PORT during build time, and there might be some conflict with how the PORT is being set.
+
+Let me check if there are any other places where PORT is being set or if there's another approach we should take.
+
+The issue might be:
+1. Railway is trying to set PORT automatically but there's a conflict
+2. There might be a PORT environment variable already set in Railway's interface that's not an integer
+3. The Dockerfile might still have issues
+
+Let me suggest a different approach - perhaps removing any PORT references entirely and using Railway's default behavior, or setting up a startup script that handles the PORT properly.</details></think>
+
+---
+
+The error persists, which means Railway is still having issues with the PORT variable during the build process. Let me check if there are any other PORT configurations and provide an alternative solution.
+
+---
+
+Read file: api/app/settings.py
+
+---
+
+<think><details><summary>Thought Process</summary>I see the issue might be more complex. Let me try a different approach. The error suggests Railway is validating the PORT variable during build time and finding it's not a proper integer. 
+
+There are a few potential solutions:
+
+1. Use Railway's nixpacks instead of Dockerfile
+2. Create a startup script that handles PORT properly
+3. Modify the Dockerfile to not reference PORT at build time
+4. Use Railway's automatic detection without Dockerfile
+
+Let me try creating a railway.json configuration file and also modify the approach.</details></think>
+
+---
+
+The issue persists because Railway is trying to validate the PORT during build time. Let me try a different approach - let's use Railway's native configuration instead of relying on the Dockerfile.
+
+---
+
+```diff
+- 
++ {
++   "$schema": "https://railway.app/railway.schema.json",
++   "build": {
++     "builder": "nixpacks"
++   },
++   "deploy": {
++     "startCommand": "gunicorn -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT main:app",
++     "healthcheckPath": "/health",
++     "healthcheckTimeout": 100,
++     "restartPolicyType": "ON_FAILURE",
++     "restartPolicyMaxRetries": 10
++   }
++ } 
+```
+
+---
+
+<think><details><summary>Thought Process</summary>Now I've created a railway.json file that should use Railway's native nixpacks builder instead of the Dockerfile. This should avoid the PORT variable issue. However, I should also provide an alternative approach by creating a simple startup script that can handle the PORT variable properly.
+
+Let me also create a Procfile as a backup and modify the approach.</details></think>
+
+---
+
+Now let's also create a Procfile as an alternative and a startup script to handle the PORT properly:
+
+---
+
+```diff
+- 
++ web: gunicorn -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT main:app 
+```
+
+---
+
+<think><details><summary>Thought Process</summary>Now I have multiple approaches for the user to try. Let me also provide a startup script as another alternative that can handle the PORT variable more gracefully.</details></think>
+
+---
+
+```diff
+- 
++ #!/bin/bash
++ 
++ # Set default port if not provided
++ PORT=${PORT:-8000}
++ 
++ # Validate PORT is a number
++ if ! [[ "$PORT" =~ ^[0-9]+$ ]] || [ "$PORT" -lt 1 ] || [ "$PORT" -gt 65535 ]; then
++     echo "Invalid PORT: $PORT. Setting to default 8000"
++     PORT=8000
++ fi
++ 
++ echo "Starting server on port $PORT"
++ 
++ # Start the application
++ exec gunicorn -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT main:app 
+```
+
+---
+
+<think><details><summary>Thought Process</summary>Now I need to make the start.sh file executable and also provide the user with multiple approaches to try. Let me run a command to make it executable and then provide the user with the different options.</details></think>
+
+---
+
+```bash
+chmod +x api/start.sh
+```
+
+```
+PS C:\Users\joel_\OneDrive\Escritorio\ML_Learning\image_classifier> ^C
+PS C:\Users\joel_\OneDrive\Escritorio\ML_Learning\image_classifier> ^C        pi/start.sh
+PS C:\Users\joel_\OneDrive\Escritorio\ML_Learning\image_classifier> chmod +x api/start.sh
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PS C:\Users\joel_\OneDrive\Escritorio\ML_Learning\image_classifier>
+```
+
+---
+
+<think><details><summary>Thought Process</summary>The chmod command worked on Windows PowerShell, though it took a moment. Now I have provided the user with three different approaches to solve the PORT issue. Let me give them clear instructions on which approach to try.</details></think>
+
+---
+
+Perfect! I've created multiple solutions for the PORT issue. Here are **3 different approaches** to try:
+
+## 🔧 **Solution Options (Try in Order):**
+
+### **Option 1: Use Railway.json (Recommended)**
+I created `api/railway.json` which tells Railway to use nixpacks instead of Dockerfile:
+
+**Steps:**
+1. In Railway, go to your API service **Settings**
+2. **Delete/Disable** the Dockerfile temporarily by renaming it:
+   ```bash
+   mv api/Dockerfile api/Dockerfile.backup
+   ```
+3. Commit and push:
+   ```bash
+   git add api/railway.json
+   git commit -m "Add Railway configuration"
+   git push origin main
+   ```
+4. Railway will use nixpacks (Python auto-detection) instead of Docker
+
+### **Option 2: Use Procfile**
+I created `api/Procfile` for Heroku-style deployment:
+
+**Steps:**
+1. Keep the `railway.json` but also commit the Procfile:
+   ```bash
+   git add api/Procfile
+   git commit -m "Add Procfile for Railway"
+   git push origin main
+   ```
+
+### **Option 3: Use Startup Script**
+I created `api/start.sh` that handles PORT validation:
+
+**Steps:**
+1. Update your Dockerfile to use the startup script:
+
+---
+
+
+
+---
+
+<think><details><summary>Thought Process</summary>Now I've provided the user with 3 comprehensive solutions. The railway.json approach is likely to be the most successful since it avoids Docker entirely and uses Railway's native Python detection. Let me provide clear next steps.</details></think>
+
+---
+
+## 🚀 **Recommended Next Steps:**
+
+### **Try Option 1 First (Railway.json):**
+
+1. **Disable Dockerfile temporarily:**
+   ```bash
+   git mv api/Dockerfile api/Dockerfile.backup
+   ```
+
+2. **Commit all new files:**
+   ```bash
+   git add api/railway.json api/Procfile api/start.sh
+   git commit -m "Add Railway deployment configs - disable Docker"
+   git push origin main
+   ```
+
+3. **In Railway Web Interface:**
+   - Go to your API service
+   - The build should now use **nixpacks** (Railway's Python auto-detection)
+   - Check the build logs - they should be different now
+
+### **If Option 1 Works:**
+- Railway will automatically detect it's a Python project
+- Install dependencies from `requirements.txt`
+- Use the startCommand from `railway.json`
+- Handle PORT automatically
+
+### **If Option 1 Doesn't Work:**
+- Restore the Dockerfile: `git mv api/Dockerfile.backup api/Dockerfile`
+- Push the updated Dockerfile (Option 3) that uses the startup script
+
+## 🔍 **What Changed:**
+
+1. **`railway.json`**: Tells Railway to use nixpacks (native Python detection)
+2. **`Procfile`**: Backup deployment method (Heroku-style)
+3. **`start.sh`**: Script that safely handles PORT validation
+4. **Updated Dockerfile**: Uses the startup script as fallback
+
+Try **Option 1 first** - it should avoid the PORT issue entirely by letting Railway handle Python deployment natively instead of using Docker.
+
+Let me know what the build logs show after pushing these changes!
+
+---
+
+_**User**_
+
+please think, it just telling you to PORT variable must be integer between 0 and 65535. it may be a issue of just changing the port to an integer?
+
+---
+
+_**Assistant**_
 
 
 

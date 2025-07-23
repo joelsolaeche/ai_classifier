@@ -15,6 +15,4 @@ RUN ["python", "-m", "pytest", "-v", "/src/tests"]
 
 FROM base as build
 
-EXPOSE 8000
-
-CMD gunicorn -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT main:app
+CMD gunicorn -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000} main:app
