@@ -12,9 +12,10 @@ origins = [
     "http://localhost:3000",  # Local development
     "http://127.0.0.1:3000",  # Local development alternative
     "https://ai-classifier-web-app.vercel.app",  # Main Vercel domain
-    "https://ai-classifier-web-238zoj6ea-slashys-projects.vercel.app",  # Vercel preview domains
+    "https://ai-classifier-rb2zmdbwq-slashys-projects.vercel.app",  # Current Vercel deployment
+    "https://*.vercel.app",  # All Vercel domains
     "https://*.up.railway.app",  # Railway domains
-    # Add your specific Railway URL when you get it
+    # Add any other Vercel preview domains as needed
 ]
 
 # Production CORS configuration
