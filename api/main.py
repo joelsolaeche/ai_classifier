@@ -12,10 +12,10 @@ origins = [
     "http://localhost:3000",  # Local development
     "http://127.0.0.1:3000",  # Local development alternative
     "https://ai-classifier-web-app.vercel.app",  # Main Vercel domain
-    "https://ai-classifier-rb2zmdbwq-slashys-projects.vercel.app",  # Current Vercel deployment
-    "https://*.vercel.app",  # All Vercel domains
+    "https://ai-classifier-rb2zmdbwq-slashys-projects.vercel.app",  # Previous Vercel deployment
+    "https://ai-classifier-553b5rxj2-slashys-projects.vercel.app",  # Current Vercel deployment
     "https://*.up.railway.app",  # Railway domains
-    # Add any other Vercel preview domains as needed
+    # Note: FastAPI CORS doesn't support wildcards like *.vercel.app reliably
 ]
 
 # Production CORS configuration
@@ -23,8 +23,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True, 
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Root endpoint for health check and CORS testing
