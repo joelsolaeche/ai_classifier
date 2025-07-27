@@ -1,47 +1,33 @@
-version: "3.2"
+# Strategy 1: Local Development (Multi-Service) - As per Railway Blueprint
+version: "3.8"
 services:
   api:
-    image: flask_api
+    image: ai_classifier_api
     container_name: ml_api
     build:
       context: ./api
       target: build
     ports:
-      - "8000:5000"
+      - "8000:8000"  # Standardized to 8000
     depends_on:
       - redis
       - model
+      - db
     volumes:
       - ./uploads:/src/uploads
     environment:
-      POSTGRES_DB: $POSTGRES_DB
-      POSTGRES_USER: $POSTGRES_USER
-      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
-      DATABASE_HOST: $DATABASE_HOST
-      SECRET_KEY: $SECRET_KEY
-      PORT: 5000
+      POSTGRES_DB: ${POSTGRES_DB:-ai_classifier_db}
+      POSTGRES_USER: ${POSTGRES_USER:-classifier_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secure_password}
+      DATABASE_HOST: ${DATABASE_HOST:-db}
+      SECRET_KEY: ${SECRET_KEY:-development-secret-key}
+      REDIS_IP: redis
+      REDIS_PORT: 6379
+      REDIS_DB_ID: 0
+      API_SLEEP: 0.5
+      PORT: 8000
     networks:
       - shared_network
-
-  redis:
-    image: redis:6.2.6
-    networks:
-      - shared_network
-
-  db:
-    image: postgres:latest
-    container_name: postgres_db
-    environment:
-      POSTGRES_DB: $POSTGRES_DB
-      POSTGRES_USER: $POSTGRES_USER
-      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    networks:
-      - shared_network
-
 
   model:
     image: ml_service
@@ -49,32 +35,59 @@ services:
     build:
       context: ./model
       dockerfile: ./Dockerfile
+      target: build
     depends_on:
       - redis
     volumes:
       - ./uploads:/src/uploads
+    environment:
+      REDIS_IP: redis
+      REDIS_PORT: 6379
+      REDIS_DB_ID: 0
+      SERVER_SLEEP: 0.05
     networks:
       - shared_network
 
-  ui:
-    image: ml_ui
-    container_name: ml_ui
-    build:
-      context: ./ui
-      target: build
+  redis:
+    image: "redis:alpine"  # Use official alpine image
+    container_name: redis_service
     ports:
-      - "9090:9090"
+      - "6379:6379"  # Expose for debugging
+    networks:
+      - shared_network
+
+  db:
+    image: postgres:latest
+    container_name: postgres_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ai_classifier_db}
+      POSTGRES_USER: ${POSTGRES_USER:-classifier_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secure_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - shared_network
+
+  # Frontend service (Next.js)
+  frontend:
+    image: ai_classifier_frontend
+    container_name: ml_frontend
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
     depends_on:
       - api
     environment:
-      - API_HOST=api
-      - API_PORT=5000
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
     networks:
       - shared_network
 
 networks:
   shared_network:
-    external: true
+    driver: bridge
 
 volumes:
   postgres_data:

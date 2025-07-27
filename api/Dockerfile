@@ -1,18 +1,26 @@
-FROM python:3.8.13 as base
+# Multi-stage build for local development
+FROM python:3.9-slim as base
 
 ENV PYTHONPATH=$PYTHONPATH:/src/
-
-COPY ./requirements.txt /src/requirements.txt
+ENV PYTHONUNBUFFERED=1
 
 WORKDIR /src
 
-RUN pip install --upgrade pip && pip install -r requirements.txt
+# CRITICAL: Copy requirements FIRST for layer caching
+COPY ./requirements.txt /src/requirements.txt
 
+RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+
+# Copy application files
 COPY ./ /src/
+
+# Create uploads directory
+RUN mkdir -p /src/uploads
 
 FROM base as test
 RUN ["python", "-m", "pytest", "-v", "/src/tests"]
 
 FROM base as build
 
-CMD gunicorn -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000} main:app
+# Use dynamic port handling
+CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000} --reload
