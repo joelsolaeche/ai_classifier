@@ -1,13 +1,45 @@
+from app import db
 from app.auth import router as auth_router
 from app.feedback import router as feedback_router
 from app.model import router as model_router
 from app.user import router as user_router
+from app.user.models import User
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Request
 from typing import List
+from sqlalchemy.orm import Session
 
 app = FastAPI(title="Image Prediction API", version="0.0.1")
+
+# Initialize demo user for Railway production
+def init_demo_user():
+    """Create demo user if it doesn't exist - for Railway deployment"""
+    try:
+        session: Session = next(db.get_db())
+        
+        # Check if demo user already exists
+        existing_user = session.query(User).filter(User.email == "admin@example.com").first()
+        
+        if not existing_user:
+            # Create demo user
+            demo_user = User(
+                name="Admin User",
+                email="admin@example.com", 
+                password="admin"  # Will be automatically hashed by User.__init__
+            )
+            session.add(demo_user)
+            session.commit()
+            print("✅ Demo user created: admin@example.com / admin")
+        else:
+            print("✅ Demo user already exists")
+            
+        session.close()
+    except Exception as e:
+        print(f"❌ Error creating demo user: {e}")
+
+# Initialize demo user on startup
+init_demo_user()
 
 # Dynamic CORS function to handle all Vercel domains
 def is_cors_allowed(origin: str) -> bool:
