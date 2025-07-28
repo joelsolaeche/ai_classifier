@@ -1,3 +1,4 @@
+import os
 from app import db
 from app.auth import router as auth_router
 from app.feedback import router as feedback_router
@@ -46,6 +47,8 @@ def init_database_and_user():
         
     except Exception as e:
         print(f"❌ Error initializing database: {e}")
+        print(f"❌ Error type: {type(e).__name__}")
+        print(f"❌ DATABASE_URL available: {bool(os.getenv('DATABASE_URL'))}")
         import traceback
         traceback.print_exc()
 
@@ -98,6 +101,22 @@ app.add_middleware(
 async def root():
     return {"message": "AI Vision Classifier API", "status": "running", "version": "0.0.1"}
 
+# TEMPORARY: Debug endpoint to check environment variables
+@app.get("/debug-env", include_in_schema=False)
+async def debug_env():
+    import os
+    return {
+        "DATABASE_URL": os.getenv("DATABASE_URL", "NOT_SET"),
+        "POSTGRES_USER": os.getenv("POSTGRES_USER", "NOT_SET"),
+        "POSTGRES_PASSWORD": os.getenv("POSTGRES_PASSWORD", "NOT_SET"), 
+        "POSTGRES_HOST": os.getenv("POSTGRES_HOST", "NOT_SET"),
+        "POSTGRES_DB": os.getenv("POSTGRES_DB", "NOT_SET"),
+        "DATABASE_HOST": os.getenv("DATABASE_HOST", "NOT_SET"),
+        "RAILWAY_ENVIRONMENT": os.getenv("RAILWAY_ENVIRONMENT", "NOT_SET"),
+        "All_DB_Vars": {k: v for k, v in os.environ.items() if any(db_key in k.upper() for db_key in ["DATABASE", "POSTGRES", "DB"])},
+        "Redis_URL": os.getenv("REDIS_URL", "NOT_SET")
+    }
+
 # CRITICAL: Comprehensive Health Check Implementation
 @app.get("/health", include_in_schema=False)
 async def health_check():
@@ -116,7 +135,8 @@ async def health_check():
     
     # Test Redis connection
     try:
-        redis_url = os.getenv('REDIS_URL') 
+        # CRITICAL: Check both uppercase and lowercase Redis URL env vars
+        redis_url = os.getenv('REDIS_URL') or os.getenv('redis_url')
         if redis_url and redis_url.startswith('redis://'):
             # Railway managed Redis
             db = redis.from_url(redis_url)
