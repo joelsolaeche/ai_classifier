@@ -12,10 +12,17 @@ from sqlalchemy.orm import Session
 
 app = FastAPI(title="Image Prediction API", version="0.0.1")
 
-# Initialize demo user for Railway production
-def init_demo_user():
-    """Create demo user if it doesn't exist - for Railway deployment"""
+# Initialize database and demo user for Railway production
+def init_database_and_user():
+    """Create database tables and demo user if they don't exist - for Railway deployment"""
     try:
+        # CRITICAL: Create all database tables first
+        from app.db import Base, engine
+        print("🔧 Creating database tables...")
+        Base.metadata.create_all(bind=engine)
+        print("✅ Database tables created/verified")
+        
+        # Create demo user
         session: Session = next(db.get_db())
         
         # Check if demo user already exists
@@ -35,11 +42,15 @@ def init_demo_user():
             print("✅ Demo user already exists")
             
         session.close()
+        print("🎉 Database initialization complete!")
+        
     except Exception as e:
-        print(f"❌ Error creating demo user: {e}")
+        print(f"❌ Error initializing database: {e}")
+        import traceback
+        traceback.print_exc()
 
-# Initialize demo user on startup
-init_demo_user()
+# Initialize database and demo user on startup
+init_database_and_user()
 
 # Dynamic CORS function to handle all Vercel domains
 def is_cors_allowed(origin: str) -> bool:
