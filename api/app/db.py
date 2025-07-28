@@ -1,14 +1,25 @@
+import os
 from app import settings as config
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-DATABASE_USERNAME = config.DATABASE_USERNAME
-DATABASE_PASSWORD = config.DATABASE_PASSWORD
-DATABASE_HOST = config.DATABASE_HOST
-DATABASE_NAME = config.DATABASE_NAME
+# CRITICAL: Railway-aware database connection
+# Check for Railway's DATABASE_URL first, then fall back to individual variables
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-SQLALCHEMY_DATABASE_URL = f"postgresql://{DATABASE_USERNAME}:{DATABASE_PASSWORD}@{DATABASE_HOST}/{DATABASE_NAME}"
+if DATABASE_URL:
+    # Railway managed PostgreSQL (preferred)
+    SQLALCHEMY_DATABASE_URL = DATABASE_URL
+    print("✅ Using Railway DATABASE_URL for PostgreSQL connection")
+else:
+    # Individual environment variables (fallback)
+    DATABASE_USERNAME = config.DATABASE_USERNAME
+    DATABASE_PASSWORD = config.DATABASE_PASSWORD
+    DATABASE_HOST = config.DATABASE_HOST
+    DATABASE_NAME = config.DATABASE_NAME
+    SQLALCHEMY_DATABASE_URL = f"postgresql://{DATABASE_USERNAME}:{DATABASE_PASSWORD}@{DATABASE_HOST}/{DATABASE_NAME}"
+    print("✅ Using individual PostgreSQL environment variables")
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
