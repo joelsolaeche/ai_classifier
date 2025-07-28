@@ -4,24 +4,45 @@ from app.model import router as model_router
 from app.user import router as user_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Request
+from typing import List
 
 app = FastAPI(title="Image Prediction API", version="0.0.1")
 
-# CORS configuration for production deployment
+# Dynamic CORS function to handle all Vercel domains
+def is_cors_allowed(origin: str) -> bool:
+    """Check if origin is allowed for CORS"""
+    if not origin:
+        return False
+    
+    allowed_patterns = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000", 
+        "https://localhost:3000",
+        # Allow all Vercel domains
+        ".vercel.app",
+        # Allow Railway domains
+        ".up.railway.app",
+    ]
+    
+    # Check for exact matches and pattern matches
+    for pattern in allowed_patterns:
+        if origin == pattern or origin.endswith(pattern):
+            return True
+            
+    return False
+
+# Dynamic CORS origins - allow all Vercel and Railway domains
 origins = [
-    "http://localhost:3000",  # Local development
-    "http://127.0.0.1:3000",  # Local development alternative
-    "https://ai-classifier-web-app.vercel.app",  # Main Vercel domain
-    "https://ai-classifier-rb2zmdbwq-slashys-projects.vercel.app",  # Previous Vercel deployment
-    "https://ai-classifier-553b5rxj2-slashys-projects.vercel.app",  # Current Vercel deployment
-    "https://*.up.railway.app",  # Railway domains
-    # Note: FastAPI CORS doesn't support wildcards like *.vercel.app reliably
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://localhost:3000",
 ]
 
-# Production CORS configuration
+# Add permissive CORS for Vercel domains
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origin_regex=r"https://.*\.vercel\.app|https://.*\.up\.railway\.app|http://localhost:3000|http://127\.0\.0\.1:3000",
     allow_credentials=True, 
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
