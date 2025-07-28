@@ -39,11 +39,12 @@ origins = [
     "https://localhost:3000",
 ]
 
-# Add permissive CORS for Vercel domains
+# Temporary: Allow ALL origins for Vercel deployment testing
+# TODO: Restrict this in production to specific domains
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"https://.*\.vercel\.app|https://.*\.up\.railway\.app|http://localhost:3000|http://127\.0\.0\.1:3000",
-    allow_credentials=True, 
+    allow_origins=["*"],  # Allow all origins temporarily
+    allow_credentials=False,  # Must be False when allow_origins=["*"]
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
     expose_headers=["*"],
