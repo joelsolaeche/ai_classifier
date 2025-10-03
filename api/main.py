@@ -85,11 +85,24 @@ origins = [
     "https://localhost:3000",
 ]
 
-# Temporary: Allow ALL origins for Vercel deployment testing
-# TODO: Restrict this in production to specific domains
+# CORS configuration for production deployment
+# Allow all Vercel domains and localhost for development
+allowed_origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000", 
+    "https://localhost:3000",
+]
+
+# Add all possible Vercel domain patterns
+vercel_patterns = [
+    "https://ai-classifier-nine.vercel.app",
+    "https://ai-classifier-*.vercel.app", 
+    "https://*.vercel.app"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins temporarily
+    allow_origins=["*"],  # Temporarily allow all origins for debugging
     allow_credentials=False,  # Must be False when allow_origins=["*"]
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
@@ -100,6 +113,16 @@ app.add_middleware(
 @app.get("/")
 async def root():
     return {"message": "AI Vision Classifier API", "status": "running", "version": "0.0.1"}
+
+# CORS test endpoint
+@app.get("/cors-test")
+async def cors_test(request: Request):
+    return {
+        "message": "CORS test successful",
+        "origin": request.headers.get("origin"),
+        "user_agent": request.headers.get("user-agent"),
+        "headers": dict(request.headers)
+    }
 
 # TEMPORARY: Debug endpoint to check environment variables
 @app.get("/debug-env", include_in_schema=False)

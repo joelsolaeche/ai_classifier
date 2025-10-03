@@ -1,0 +1,10 @@
+{
+  "env": {
+    "NEXT_PUBLIC_API_URL": "https://aiclassifier-production.up.railway.app"
+  },
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_API_URL": "https://aiclassifier-production.up.railway.app"
+    }
+  }
+}

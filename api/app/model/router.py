@@ -7,11 +7,16 @@ from app import utils
 from app.auth.jwt import get_current_user
 from app.model.schema import PredictRequest, PredictResponse
 from app.model.services import model_predict
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status, Response
 from sqlalchemy.orm import Session
 
 router = APIRouter(tags=["Model"], prefix="/model")
 
+
+@router.options("/predict")
+async def predict_options():
+    """Handle preflight OPTIONS request for CORS"""
+    return {"message": "OK"}
 
 @router.post("/predict")
 async def predict(file: UploadFile, current_user=Depends(get_current_user)):
