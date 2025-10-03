@@ -8,7 +8,6 @@ from app.user.models import User
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Request, Response
-from fastapi.middleware.base import BaseHTTPMiddleware
 from typing import List
 from sqlalchemy.orm import Session
 
@@ -56,30 +55,7 @@ def init_database_and_user():
 # Initialize database and demo user on startup
 init_database_and_user()
 
-# Custom CORS middleware to ensure headers are always set
-class CustomCORSMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        # Handle preflight requests
-        if request.method == "OPTIONS":
-            response = Response()
-            response.headers["Access-Control-Allow-Origin"] = "*"
-            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH"
-            response.headers["Access-Control-Allow-Headers"] = "*"
-            response.headers["Access-Control-Max-Age"] = "86400"
-            return response
-        
-        # Process the request
-        response = await call_next(request)
-        
-        # Add CORS headers to all responses
-        response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH"
-        response.headers["Access-Control-Allow-Headers"] = "*"
-        
-        return response
 
-# Add custom CORS middleware
-app.add_middleware(CustomCORSMiddleware)
 
 # Dynamic CORS function to handle all Vercel domains
 def is_cors_allowed(origin: str) -> bool:
@@ -130,18 +106,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Allow all origins for debugging
     allow_credentials=False,  # Must be False when allow_origins=["*"]
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"],
-    allow_headers=[
-        "Accept",
-        "Accept-Language",
-        "Content-Language",
-        "Content-Type",
-        "Authorization",
-        "X-Requested-With",
-        "Origin",
-        "Access-Control-Request-Method",
-        "Access-Control-Request-Headers",
-    ],
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
     expose_headers=["*"],
 )
 
@@ -159,6 +125,19 @@ async def cors_test(request: Request):
         "user_agent": request.headers.get("user-agent"),
         "headers": dict(request.headers)
     }
+
+# Global OPTIONS handler for all routes
+@app.options("/{full_path:path}")
+async def options_handler(request: Request):
+    return Response(
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Max-Age": "86400"
+        }
+    )
 
 # TEMPORARY: Debug endpoint to check environment variables
 @app.get("/debug-env", include_in_schema=False)
