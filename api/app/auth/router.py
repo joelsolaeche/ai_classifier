@@ -1,8 +1,9 @@
 from app import db
 from app.user import hashing
 from app.user.models import User
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from fastapi.security import OAuth2PasswordRequestForm
+import json
 from sqlalchemy.orm import Session
 
 from .jwt import create_access_token
@@ -31,4 +32,15 @@ def login(
         )
 
     access_token = create_access_token(data={"sub": user.email})
-    return {"access_token": access_token, "token_type": "bearer"}
+    
+    # Create response with explicit CORS headers
+    response_data = {"access_token": access_token, "token_type": "bearer"}
+    response = Response(
+        content=json.dumps(response_data),
+        media_type="application/json"
+    )
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    
+    return response

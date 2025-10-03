@@ -116,15 +116,38 @@ app.add_middleware(
 async def root():
     return {"message": "AI Vision Classifier API", "status": "running", "version": "0.0.1"}
 
-# CORS test endpoint
+# Simple CORS test endpoint
+@app.get("/simple-cors-test")
+async def simple_cors_test():
+    response = Response(
+        content='{"message": "Simple CORS test", "status": "ok"}',
+        media_type="application/json"
+    )
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    return response
+
+# CORS test endpoint with explicit headers
 @app.get("/cors-test")
 async def cors_test(request: Request):
-    return {
+    response_data = {
         "message": "CORS test successful",
         "origin": request.headers.get("origin"),
         "user_agent": request.headers.get("user-agent"),
         "headers": dict(request.headers)
     }
+    
+    response = Response(
+        content=str(response_data).replace("'", '"'),
+        media_type="application/json",
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH",
+            "Access-Control-Allow-Headers": "*",
+        }
+    )
+    return response
 
 # Global OPTIONS handler for all routes
 @app.options("/{full_path:path}")
