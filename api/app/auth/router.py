@@ -10,6 +10,11 @@ from .jwt import create_access_token
 router = APIRouter(tags=["auth"])
 
 
+@router.options("/login")
+async def login_options():
+    """Handle preflight OPTIONS request for CORS"""
+    return {"message": "OK"}
+
 @router.post("/login")
 def login(
     request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(db.get_db)

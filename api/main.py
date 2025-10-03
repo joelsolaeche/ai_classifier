@@ -7,7 +7,8 @@ from app.user import router as user_router
 from app.user.models import User
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import Request
+from fastapi import Request, Response
+from fastapi.middleware.base import BaseHTTPMiddleware
 from typing import List
 from sqlalchemy.orm import Session
 
@@ -54,6 +55,31 @@ def init_database_and_user():
 
 # Initialize database and demo user on startup
 init_database_and_user()
+
+# Custom CORS middleware to ensure headers are always set
+class CustomCORSMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # Handle preflight requests
+        if request.method == "OPTIONS":
+            response = Response()
+            response.headers["Access-Control-Allow-Origin"] = "*"
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH"
+            response.headers["Access-Control-Allow-Headers"] = "*"
+            response.headers["Access-Control-Max-Age"] = "86400"
+            return response
+        
+        # Process the request
+        response = await call_next(request)
+        
+        # Add CORS headers to all responses
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        
+        return response
+
+# Add custom CORS middleware
+app.add_middleware(CustomCORSMiddleware)
 
 # Dynamic CORS function to handle all Vercel domains
 def is_cors_allowed(origin: str) -> bool:
@@ -102,10 +128,20 @@ vercel_patterns = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Temporarily allow all origins for debugging
+    allow_origins=["*"],  # Allow all origins for debugging
     allow_credentials=False,  # Must be False when allow_origins=["*"]
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"],
+    allow_headers=[
+        "Accept",
+        "Accept-Language",
+        "Content-Language",
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "Origin",
+        "Access-Control-Request-Method",
+        "Access-Control-Request-Headers",
+    ],
     expose_headers=["*"],
 )
 
