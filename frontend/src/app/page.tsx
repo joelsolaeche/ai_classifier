@@ -351,7 +351,7 @@ export default function Home() {
               <span className="text-lg font-semibold text-gray-800">AI Vision Classifier</span>
             </div>
             <p className="text-gray-600 mb-2">
-              © 2024 AI Vision Classifier - Built with Next.js, FastAPI, and ResNet50
+              © 2024 AI Vision Classifier - Built with Next.js, FastAPI, and ResNet50 (v1.1)
             </p>
             <p className="text-sm text-gray-500">
               Powered by deep learning for accurate image classification across 1000+ categories
