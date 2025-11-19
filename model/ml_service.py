@@ -15,17 +15,30 @@ import sys
 # MANDATORY: Environment-aware Redis connection
 # Automatically detects Railway managed Redis vs local development
 redis_url = os.getenv('REDIS_URL')
+print("=" * 60)
+print("ML SERVICE INITIALIZATION")
+print("=" * 60)
 if redis_url and redis_url.startswith('redis://'):
     # Railway managed Redis
-    db = redis.from_url(redis_url)
+    print(f"🔧 Connecting to Railway Redis: {redis_url[:30]}...")
+    db = redis.from_url(redis_url, socket_connect_timeout=5, socket_timeout=5)
+    db.ping()  # Test connection
+    print("✅ ML Service connected to Railway managed Redis")
 else:
     # Local development Redis
-    db = redis.Redis(host=settings.REDIS_IP, port=settings.REDIS_PORT, db=settings.REDIS_DB_ID)
+    print(f"🔧 Connecting to local Redis: {settings.REDIS_IP}:{settings.REDIS_PORT}")
+    db = redis.Redis(host=settings.REDIS_IP, port=settings.REDIS_PORT, db=settings.REDIS_DB_ID, socket_connect_timeout=5)
+    db.ping()  # Test connection
+    print("✅ ML Service connected to local development Redis")
 
 # Load your ML model and assign to variable `model`
 # See https://drive.google.com/file/d/1ADuBSE4z2ZVIdn66YDSwxKv-58U7WEOn/view?usp=sharing
 # for more information about how to use this model.
+print("🧠 Loading ResNet50 model (this may take 30-60 seconds)...")
 model = ResNet50(weights='imagenet')
+print("✅ ResNet50 model loaded successfully!")
+print(f"✅ ML Service ready - listening on queue: {settings.REDIS_QUEUE}")
+print("=" * 60)
 
 
 def predict(image_name):
@@ -76,42 +89,56 @@ def classify_process():
     Load image from the corresponding folder based on the image name
     received, then, run our ML model to get predictions.
     """
+    print("🔄 Starting classification loop - waiting for jobs...")
+    job_count = 0
+    
     while True:
-        # Inside this loop you should add the code to:
-        #   1. Take a new job from Redis
-        #   2. Run your ML model on the given data
-        #   3. Store model prediction in a dict with the following shape:
-        #      {
-        #         "prediction": str,
-        #         "score": float,
-        #      }
-        #   4. Store the results on Redis using the original job ID as the key
-        #      so the API can match the results it gets to the original job
-        #      sent
-        # Hint: You should be able to successfully implement the communication
-        #       code with Redis making use of functions `brpop()` and `set()`.
-        
-        # Take a new job from Redis
-        job = db.brpop(settings.REDIS_QUEUE)
-        
-        if job:
-            # Decode the JSON data for the given job
-            job_data = json.loads(job[1])
+        try:
+            # Take a new job from Redis with timeout
+            print(f"📡 Polling Redis queue '{settings.REDIS_QUEUE}' for jobs...")
+            job = db.brpop(settings.REDIS_QUEUE, timeout=5)
             
-            # Important! Get and keep the original job ID
-            job_id = job_data["id"]
-            image_name = job_data["image_name"]
+            if job:
+                job_count += 1
+                print(f"\n{'='*60}")
+                print(f"🎯 Job #{job_count} received from queue")
+                
+                # Decode the JSON data for the given job
+                job_data = json.loads(job[1])
+                
+                # Important! Get and keep the original job ID
+                job_id = job_data["id"]
+                image_name = job_data["image_name"]
+                print(f"📋 Job ID: {job_id}")
+                print(f"📸 Image: {image_name}")
+                
+                # Run the loaded ml model (use the predict() function)
+                print(f"🧠 Running ResNet50 prediction...")
+                start_time = time.time()
+                class_name, pred_probability = predict(image_name)
+                elapsed = time.time() - start_time
+                
+                print(f"✅ Prediction complete in {elapsed:.2f}s")
+                print(f"🏷️  Class: {class_name}")
+                print(f"📊 Score: {pred_probability}")
+                
+                # Prepare a new JSON with the results
+                output = {"prediction": class_name, "score": pred_probability}
+                
+                # Store the job results on Redis using the original job ID as the key
+                db.set(job_id, json.dumps(output))
+                print(f"✅ Results stored in Redis with key: {job_id}")
+                print(f"{'='*60}\n")
+            else:
+                # No job available (timeout)
+                print("⏳ No jobs in queue, waiting...")
+                
+        except Exception as e:
+            print(f"❌ Error processing job: {e}")
+            print(f"❌ Error type: {type(e).__name__}")
+            import traceback
+            traceback.print_exc()
             
-            # Run the loaded ml model (use the predict() function)
-            class_name, pred_probability = predict(image_name)
-            
-            # Prepare a new JSON with the results
-            output = {"prediction": class_name, "score": pred_probability}
-            
-            # Store the job results on Redis using the original
-            # job ID as the key
-            db.set(job_id, json.dumps(output))
-
         # Sleep for a bit
         time.sleep(settings.SERVER_SLEEP)
 
