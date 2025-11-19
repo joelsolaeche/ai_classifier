@@ -50,11 +50,11 @@ else:
 # Load your ML model and assign to variable `model`
 # See https://drive.google.com/file/d/1ADuBSE4z2ZVIdn66YDSwxKv-58U7WEOn/view?usp=sharing
 # for more information about how to use this model.
-print("🧠 Loading ResNet50 model (this may take 30-60 seconds)...")
+print("🧠 Loading ResNet50 model (this may take 30-60 seconds)...", flush=True)
 model = ResNet50(weights='imagenet')
-print("✅ ResNet50 model loaded successfully!")
-print(f"✅ ML Service ready - listening on queue: {settings.REDIS_QUEUE}")
-print("=" * 60)
+print("✅ ResNet50 model loaded successfully!", flush=True)
+print(f"✅ ML Service ready - listening on queue: {settings.REDIS_QUEUE}", flush=True)
+print("=" * 60, flush=True)
 
 
 def predict(image_name):
@@ -202,5 +202,5 @@ def classify_process():
 
 if __name__ == "__main__":
     # Now launch process
-    print("Launching ML service...")
+    print("Launching ML service...", flush=True)
     classify_process()
