@@ -9,6 +9,26 @@ echo "=== Railway Production Startup ==="
 echo "Starting AI Classifier service on port $PORT"
 echo "Environment: ${RAILWAY_ENVIRONMENT:-local}"
 
+# CRITICAL: Clear old Redis jobs from previous deploys
+echo "🧹 Clearing old Redis jobs..."
+python3 -c "
+import redis, os, sys
+try:
+    redis_url = os.getenv('REDIS_URL')
+    if redis_url:
+        r = redis.from_url(redis_url)
+        count = r.llen('service_queue') or 0
+        if count > 0:
+            r.delete('service_queue')
+            print(f'✅ Cleared {count} old jobs from Redis queue', flush=True)
+        else:
+            print('✅ Redis queue already empty', flush=True)
+    else:
+        print('⚠️  REDIS_URL not set, skipping queue clear', flush=True)
+except Exception as e:
+    print(f'⚠️  Could not clear Redis queue: {e}', flush=True)
+" || echo "⚠️  Queue clear failed, continuing anyway..."
+
 # Start ML service in background (bundled in single container)
 echo "Starting ML classification service..."
 echo "Working directory: $(pwd)"
