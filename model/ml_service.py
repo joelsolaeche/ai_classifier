@@ -21,13 +21,29 @@ print("=" * 60)
 if redis_url and redis_url.startswith('redis://'):
     # Railway managed Redis
     print(f"🔧 Connecting to Railway Redis: {redis_url[:30]}...")
-    db = redis.from_url(redis_url, socket_connect_timeout=5, socket_timeout=5)
+    # CRITICAL: Increase timeouts for Railway's network latency
+    db = redis.from_url(
+        redis_url,
+        socket_connect_timeout=10,  # Allow 10 seconds for connection
+        socket_timeout=30,           # Allow 30 seconds for socket operations
+        socket_keepalive=True,       # Enable TCP keepalive
+        socket_keepalive_options={},
+        retry_on_timeout=True        # Retry on timeout
+    )
     db.ping()  # Test connection
     print("✅ ML Service connected to Railway managed Redis")
 else:
     # Local development Redis
     print(f"🔧 Connecting to local Redis: {settings.REDIS_IP}:{settings.REDIS_PORT}")
-    db = redis.Redis(host=settings.REDIS_IP, port=settings.REDIS_PORT, db=settings.REDIS_DB_ID, socket_connect_timeout=5)
+    db = redis.Redis(
+        host=settings.REDIS_IP,
+        port=settings.REDIS_PORT,
+        db=settings.REDIS_DB_ID,
+        socket_connect_timeout=10,
+        socket_timeout=30,
+        socket_keepalive=True,
+        retry_on_timeout=True
+    )
     db.ping()  # Test connection
     print("✅ ML Service connected to local development Redis")
 
@@ -91,12 +107,17 @@ def classify_process():
     """
     print("🔄 Starting classification loop - waiting for jobs...")
     job_count = 0
+    consecutive_errors = 0
+    max_consecutive_errors = 3
     
     while True:
         try:
-            # Take a new job from Redis with timeout
+            # Take a new job from Redis with longer timeout for Railway
             print(f"📡 Polling Redis queue '{settings.REDIS_QUEUE}' for jobs...")
-            job = db.brpop(settings.REDIS_QUEUE, timeout=5)
+            job = db.brpop(settings.REDIS_QUEUE, timeout=10)  # Increased to 10 seconds
+            
+            # Reset error counter on successful operation
+            consecutive_errors = 0
             
             if job:
                 job_count += 1
@@ -133,11 +154,47 @@ def classify_process():
                 # No job available (timeout)
                 print("⏳ No jobs in queue, waiting...")
                 
+        except redis.exceptions.TimeoutError as e:
+            consecutive_errors += 1
+            print(f"⚠️  Redis timeout error (#{consecutive_errors}): {e}")
+            
+            if consecutive_errors >= max_consecutive_errors:
+                print(f"❌ Too many consecutive errors ({consecutive_errors}). Attempting to reconnect...")
+                try:
+                    # Try to reconnect
+                    db.ping()
+                    print("✅ Redis connection still alive")
+                    consecutive_errors = 0
+                except Exception as reconnect_error:
+                    print(f"❌ Redis connection lost: {reconnect_error}")
+                    print("⏳ Waiting 5 seconds before retry...")
+                    time.sleep(5)
+                    consecutive_errors = 0  # Reset and try again
+            else:
+                print("⏳ Retrying after brief delay...")
+                time.sleep(1)
+                
+        except redis.exceptions.ConnectionError as e:
+            print(f"❌ Redis connection error: {e}")
+            print("⏳ Waiting 5 seconds before reconnecting...")
+            time.sleep(5)
+            try:
+                db.ping()
+                print("✅ Reconnected to Redis")
+            except Exception as reconnect_error:
+                print(f"❌ Reconnection failed: {reconnect_error}")
+                
         except Exception as e:
+            consecutive_errors += 1
             print(f"❌ Error processing job: {e}")
             print(f"❌ Error type: {type(e).__name__}")
             import traceback
             traceback.print_exc()
+            
+            if consecutive_errors >= max_consecutive_errors:
+                print("⏳ Too many errors, waiting 5 seconds...")
+                time.sleep(5)
+                consecutive_errors = 0
             
         # Sleep for a bit
         time.sleep(settings.SERVER_SLEEP)

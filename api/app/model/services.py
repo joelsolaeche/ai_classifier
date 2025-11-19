@@ -11,13 +11,28 @@ from .. import settings
 # Connect to Redis and assign to variable `db`
 redis_url = os.getenv('REDIS_URL')
 if redis_url and redis_url.startswith('redis://'):
-    # Railway managed Redis
-    db = redis.from_url(redis_url)
-    print("✅ Connected to Railway managed Redis")
+    # Railway managed Redis with increased timeouts
+    db = redis.from_url(
+        redis_url,
+        socket_connect_timeout=10,
+        socket_timeout=30,
+        socket_keepalive=True,
+        socket_keepalive_options={},
+        retry_on_timeout=True
+    )
+    print("✅ API connected to Railway managed Redis")
 else:
     # Local development Redis
-    db = redis.Redis(host=settings.REDIS_IP, port=settings.REDIS_PORT, db=settings.REDIS_DB_ID)
-    print("✅ Connected to local development Redis")
+    db = redis.Redis(
+        host=settings.REDIS_IP,
+        port=settings.REDIS_PORT,
+        db=settings.REDIS_DB_ID,
+        socket_connect_timeout=10,
+        socket_timeout=30,
+        socket_keepalive=True,
+        retry_on_timeout=True
+    )
+    print("✅ API connected to local development Redis")
 
 
 async def model_predict(image_name):
