@@ -14,9 +14,11 @@ IS_RAILWAY = RAILWAY_ENVIRONMENT is not None
 # Run API in Debug mode (disable in production)
 API_DEBUG = not IS_RAILWAY
 
-# We will store images uploaded by the user on this folder
-UPLOAD_FOLDER = "uploads/"
+# CRITICAL: Use absolute path for Railway shared storage
+# In Railway single-container deployment, both API and ML service share /app/uploads
+UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+print(f"✅ API uploads directory: {UPLOAD_FOLDER}", flush=True)
 
 # MANDATORY: Smart Redis connection - detects Railway vs local
 REDIS_QUEUE = "service_queue"

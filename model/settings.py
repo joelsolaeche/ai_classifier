@@ -1,8 +1,10 @@
 import os
 
-# We will store images uploaded by the user on this folder
-UPLOAD_FOLDER = "uploads/"
+# CRITICAL: Use absolute path for Railway shared storage
+# In Railway single-container deployment, both API and ML service share /app/uploads
+UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+print(f"✅ ML Service uploads directory: {UPLOAD_FOLDER}", flush=True)
 
 # REDIS
 # Queue name
