@@ -51,10 +51,20 @@ else:
 # See https://drive.google.com/file/d/1ADuBSE4z2ZVIdn66YDSwxKv-58U7WEOn/view?usp=sharing
 # for more information about how to use this model.
 print("🧠 Loading ResNet50 model (this may take 30-60 seconds)...", flush=True)
+import sys
+sys.stdout.flush()
+sys.stderr.flush()
+
 model = ResNet50(weights='imagenet')
+
+# CRITICAL: Force flush after model loading
+sys.stdout.flush()
+sys.stderr.flush()
 print("✅ ResNet50 model loaded successfully!", flush=True)
 print(f"✅ ML Service ready - listening on queue: {settings.REDIS_QUEUE}", flush=True)
 print("=" * 60, flush=True)
+sys.stdout.flush()
+sys.stderr.flush()
 
 
 def predict(image_name):
@@ -202,5 +212,12 @@ def classify_process():
 
 if __name__ == "__main__":
     # Now launch process
-    print("Launching ML service...", flush=True)
+    import sys
+    sys.stdout.flush()
+    sys.stderr.flush()
+    print("\n" + "="*60, flush=True)
+    print("🚀 LAUNCHING ML SERVICE - classify_process()", flush=True)
+    print("="*60 + "\n", flush=True)
+    sys.stdout.flush()
+    sys.stderr.flush()
     classify_process()
