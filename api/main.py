@@ -16,41 +16,56 @@ app = FastAPI(title="Image Prediction API", version="0.0.1")
 # Initialize database and demo user for Railway production
 def init_database_and_user():
     """Create database tables and demo user if they don't exist - for Railway deployment"""
-    try:
-        # CRITICAL: Create all database tables first
-        from app.db import Base, engine
-        print("🔧 Creating database tables...")
-        Base.metadata.create_all(bind=engine)
-        print("✅ Database tables created/verified")
-        
-        # Create demo user
-        session: Session = next(db.get_db())
-        
-        # Check if demo user already exists
-        existing_user = session.query(User).filter(User.email == "admin@example.com").first()
-        
-        if not existing_user:
-            # Create demo user
-            demo_user = User(
-                name="Admin User",
-                email="admin@example.com", 
-                password="admin"  # Will be automatically hashed by User.__init__
-            )
-            session.add(demo_user)
-            session.commit()
-            print("✅ Demo user created: admin@example.com / admin")
-        else:
-            print("✅ Demo user already exists")
+    import time
+    max_retries = 5
+    retry_delay = 3
+    
+    for attempt in range(max_retries):
+        try:
+            print(f"🔧 Database initialization attempt {attempt + 1}/{max_retries}...")
             
-        session.close()
-        print("🎉 Database initialization complete!")
-        
-    except Exception as e:
-        print(f"❌ Error initializing database: {e}")
-        print(f"❌ Error type: {type(e).__name__}")
-        print(f"❌ DATABASE_URL available: {bool(os.getenv('DATABASE_URL'))}")
-        import traceback
-        traceback.print_exc()
+            # CRITICAL: Create all database tables first
+            from app.db import Base, engine
+            print("🔧 Creating database tables...")
+            Base.metadata.create_all(bind=engine)
+            print("✅ Database tables created/verified")
+            
+            # Create demo user
+            session: Session = next(db.get_db())
+            
+            # Check if demo user already exists
+            existing_user = session.query(User).filter(User.email == "admin@example.com").first()
+            
+            if not existing_user:
+                # Create demo user
+                demo_user = User(
+                    name="Admin User",
+                    email="admin@example.com", 
+                    password="admin"  # Will be automatically hashed by User.__init__
+                )
+                session.add(demo_user)
+                session.commit()
+                print("✅ Demo user created: admin@example.com / admin")
+            else:
+                print("✅ Demo user already exists")
+                
+            session.close()
+            print("🎉 Database initialization complete!")
+            return  # Success, exit function
+            
+        except Exception as e:
+            print(f"❌ Database initialization attempt {attempt + 1} failed: {e}")
+            print(f"❌ Error type: {type(e).__name__}")
+            
+            if attempt < max_retries - 1:
+                print(f"⏳ Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            else:
+                print("❌ Max retries reached. Database may not be available yet.")
+                print("⚠️  Application will continue but /login may fail until DB is ready")
+                print(f"❌ DATABASE_URL available: {bool(os.getenv('DATABASE_URL'))}")
+                import traceback
+                traceback.print_exc()
 
 # Initialize database and demo user on startup
 init_database_and_user()
@@ -104,11 +119,12 @@ vercel_patterns = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for debugging
+    allow_origins=["*"],  # Allow all origins
     allow_credentials=False,  # Must be False when allow_origins=["*"]
-    allow_methods=["*"],  # Allow all methods
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=["*"],
     expose_headers=["*"],
+    max_age=3600,  # Cache preflight requests for 1 hour
 )
 
 # Root endpoint for health check and CORS testing

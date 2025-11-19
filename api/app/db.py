@@ -12,6 +12,7 @@ if DATABASE_URL:
     # Railway managed PostgreSQL (preferred)
     SQLALCHEMY_DATABASE_URL = DATABASE_URL
     print("✅ Using Railway DATABASE_URL for PostgreSQL connection")
+    print(f"🔍 Connection string: {DATABASE_URL[:50]}...")  # Log partial URL for debugging
 else:
     # Individual environment variables (fallback)
     DATABASE_USERNAME = config.DATABASE_USERNAME
@@ -21,7 +22,18 @@ else:
     SQLALCHEMY_DATABASE_URL = f"postgresql://{DATABASE_USERNAME}:{DATABASE_PASSWORD}@{DATABASE_HOST}/{DATABASE_NAME}"
     print("✅ Using individual PostgreSQL environment variables")
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
+# CRITICAL: Add connection pool settings for Railway stability
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL,
+    pool_pre_ping=True,  # Verify connections before using them
+    pool_recycle=300,    # Recycle connections after 5 minutes
+    pool_size=5,         # Limit connection pool size
+    max_overflow=10,     # Allow up to 10 overflow connections
+    connect_args={
+        "connect_timeout": 10,  # 10 second connection timeout
+        "options": "-c timezone=utc"
+    }
+)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
