@@ -34,13 +34,23 @@ async def predict(file: UploadFile, current_user=Depends(get_current_user)):
         hashed_filename = await utils.get_file_hash(file)
         file_path = os.path.join(config.UPLOAD_FOLDER, hashed_filename)
         
+        print(f"📁 Saving file to: {file_path}", flush=True)
+        print(f"📁 Upload folder: {config.UPLOAD_FOLDER}", flush=True)
+        print(f"📁 File exists before save: {os.path.exists(file_path)}", flush=True)
+        
         # Check if file already exists, if not save it
         if not os.path.exists(file_path):
             with open(file_path, "wb") as buffer:
                 content = await file.read()
+                print(f"📁 File content size: {len(content)} bytes", flush=True)
                 buffer.write(content)
+            print(f"✅ File saved successfully: {file_path}", flush=True)
+            print(f"✅ File exists after save: {os.path.exists(file_path)}", flush=True)
+        else:
+            print(f"✅ File already exists, skipping save: {file_path}", flush=True)
         
         # 3. Send the file to be processed by the model service
+        print(f"🚀 Sending to ML service: {hashed_filename}", flush=True)
         prediction, score = await model_predict(hashed_filename)
         
         # 4. Update and return rpse dict with the corresponding values
